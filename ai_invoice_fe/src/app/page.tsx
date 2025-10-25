@@ -115,26 +115,14 @@ export default function Home() {
     }
   };
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     if (!downloadUrl) return;
-
-    try {
-      const response = await fetch(downloadUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName.endsWith(".xlsx") ? fileName : `${fileName}.xlsx`;
-      a.click();
-
-      window.URL.revokeObjectURL(url);
-      setIsDialogOpen(false);
-      toast.success(`File downloaded as ${fileName}`);
-    } catch (error) {
-      toast.error("Failed to download the file");
-      console.error(error);
-    }
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = fileName.endsWith(".xlsx") ? fileName : `${fileName}.xlsx`;
+    a.click();
+    setIsDialogOpen(false);
+    toast.success(`File downloaded as ${fileName}`);
   };
 
   const totalFiles = allDocFiles.length + excelFiles.length;
