@@ -5,9 +5,15 @@ import Image from 'next/image';
 import { DocumentUpload } from '../Components/documents_upload';
 import { Button } from '../Components/ui/button';
 import { Card } from '../Components/ui/card';
-import { FileSpreadsheet, Loader2, Download, Sparkles } from 'lucide-react';
+import { FileSpreadsheet, Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-// import * as XLSX from 'xlsx';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../Components/ui/dialog";
+import { Input } from "../Components/ui/input";
 
 interface ProcessedData {
   fileName: string;
@@ -19,6 +25,11 @@ export default function Home() {
   const [excelFiles, setExcelFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processedData, setProcessedData] = useState<ProcessedData[]>([]);
+
+  // 🆕 States for dialog and file download
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState("");
+  const [fileName, setFileName] = useState("Updated_Invoice_Data.xlsx");
 
   const handleFilesAdded = (files: File[], section: 'all' | 'excel') => {
     if (section === 'all') {
@@ -51,7 +62,6 @@ export default function Home() {
     toast.info('File removed');
   };
 
-
   const processDocuments = async () => {
     if (allDocFiles.length === 0 && excelFiles.length === 0) {
       toast.error('Please upload at least one document');
@@ -64,12 +74,10 @@ export default function Home() {
     }
 
     setIsProcessing(true);
-    const processed: ProcessedData[] = [];
 
     try {
       const formData = new FormData();
       allDocFiles.forEach((file) => formData.append("invoice", file));
-      // excelFiles.forEach((file) => formData.append("excel", file)); // send only first one ideally
       if (excelFiles.length > 0) {
         formData.append("excel", excelFiles[0]);
       }
@@ -85,18 +93,20 @@ export default function Home() {
         toast.error(result.error || "Server error while processing documents");
         return;
       }
-      
+
       toast.success(result.message);
 
-      // Auto-download updated Excel
       if (result.updated_excel_path) {
-        const a = document.createElement("a");
-        a.href = result.updated_excel_path;
-        a.download = "Updated_Invoice_Data.xlsx";
-        a.click();
+        // 🆕 Save URL and show rename dialog instead of auto-downloading
+        setDownloadUrl(result.updated_excel_path);
+        setIsDialogOpen(true);
+
+        // 🧹 Clear uploaded files after successful process
+        setAllDocFiles([]);
+        setExcelFiles([]);
       }
 
-      toast.success('Documents processed and Excel file updated!');
+      toast.success('Documents processed successfully!');
     } catch (error) {
       toast.error('Error processing documents');
       console.error(error);
@@ -105,7 +115,15 @@ export default function Home() {
     }
   };
 
-  
+  const handleDownload = () => {
+    if (!downloadUrl) return;
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = fileName.endsWith(".xlsx") ? fileName : `${fileName}.xlsx`;
+    a.click();
+    setIsDialogOpen(false);
+    toast.success(`File downloaded as ${fileName}`);
+  };
 
   const totalFiles = allDocFiles.length + excelFiles.length;
 
@@ -198,13 +216,34 @@ export default function Home() {
                 <div className="bg-linear-to-br from-indigo-100 to-purple-100 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
                   <FileSpreadsheet className="w-12 h-12 text-indigo-600" />
                 </div>
-                <h3 className="text-2xl font-bold mb-3 text-slate-900">Ready to Process Documents</h3>
+                <h3 className="text-2xl font-bold mb-3 text-slate-900">
+                  Ready to Process Documents
+                </h3>
                 <p className="text-slate-600 text-lg leading-relaxed">
                   Upload your documents to get started. Add files to both sections and click Process to consolidate everything into a single Excel file.
                 </p>
               </div>
             </Card>
           )}
+
+          {/* 🆕 Rename & Download Dialog */}
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Rename & Download File</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  value={fileName}
+                  onChange={(e) => setFileName(e.target.value)}
+                  placeholder="Enter new file name"
+                />
+                <Button onClick={handleDownload} className="w-full">
+                  Download
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>
