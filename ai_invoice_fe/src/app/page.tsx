@@ -115,14 +115,26 @@ export default function Home() {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!downloadUrl) return;
-    const a = document.createElement("a");
-    a.href = downloadUrl;
-    a.download = fileName.endsWith(".xlsx") ? fileName : `${fileName}.xlsx`;
-    a.click();
-    setIsDialogOpen(false);
-    toast.success(`File downloaded as ${fileName}`);
+
+    try {
+      const response = await fetch(downloadUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName.endsWith(".xlsx") ? fileName : `${fileName}.xlsx`;
+      a.click();
+
+      window.URL.revokeObjectURL(url);
+      setIsDialogOpen(false);
+      toast.success(`File downloaded as ${fileName}`);
+    } catch (error) {
+      toast.error("Failed to download the file");
+      console.error(error);
+    }
   };
 
   const totalFiles = allDocFiles.length + excelFiles.length;
@@ -238,7 +250,10 @@ export default function Home() {
                   onChange={(e) => setFileName(e.target.value)}
                   placeholder="Enter new file name"
                 />
-                <Button onClick={handleDownload} className="w-full">
+                <Button onClick={handleDownload}
+                  size="lg"
+                  className="w-full lg:w-auto bg-linear-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-700 hover:via-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 text-base px-8"
+                  >
                   Download
                 </Button>
               </div>
