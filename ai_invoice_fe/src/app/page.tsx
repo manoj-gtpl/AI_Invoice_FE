@@ -238,7 +238,10 @@ export default function Home() {
                   onChange={(e) => setFileName(e.target.value)}
                   placeholder="Enter new file name"
                 />
-                <Button onClick={handleDownload} className="w-full">
+                <Button onClick={handleDownload}
+                  size="lg"
+                  className="w-full lg:w-auto bg-linear-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-700 hover:via-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 text-base px-8"
+                  >
                   Download
                 </Button>
               </div>
